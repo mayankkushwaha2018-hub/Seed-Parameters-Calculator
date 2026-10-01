@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed Germination Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap');
+:root {
+  --primary:#74c69d;--secondary:#48cae4;--accent:#e9a719;
+  --t-text:#f0e6d3;--t-muted:#c4aa88;
+  --t-surface:rgba(255,255,255,0.07);--t-border:rgba(255,255,255,0.15);
+  --t-input-bg:rgba(255,255,255,0.06);--t-input-border:rgba(255,255,255,0.12);
+  --t-placeholder:rgba(255,255,255,0.25);--t-row-hover:rgba(255,255,255,0.04);
+  --t-th-bg:rgba(82,183,136,0.12);
+  --t-sidebar:rgba(8,20,14,0.98);--t-sidebar-text:#f0e6d3;
+  --t-sidebar-border:rgba(255,255,255,0.08);--t-sidebar-card:rgba(255,255,255,0.04);
+  --t-calc-btn:linear-gradient(135deg,#2d6a4f,#0077b6,#52b788);
+  --t-orb1:rgba(82,183,136,0.15);--t-orb2:rgba(0,119,182,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{min-height:100vh;background:radial-gradient(ellipse at 20% 80%,rgba(92,61,30,.6) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(0,119,182,.3) 0%,transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(27,67,50,.8) 0%,transparent 70%),linear-gradient(160deg,#0d2018 0%,#1b4332 30%,#1a3a52 60%,#2c1a0e 100%);font-family:'Nunito',sans-serif;color:var(--t-text);padding:24px 16px 60px;overflow-x:hidden;transition:color .3s;}
+body::before,body::after{content:'';position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;animation:orb-float 10s ease-in-out infinite alternate;}
+body::before{width:400px;height:400px;background:radial-gradient(circle,var(--t-orb1),transparent);top:-100px;left:-100px;}
+body::after{width:350px;height:350px;background:radial-gradient(circle,var(--t-orb2),transparent);bottom:-50px;right:-50px;animation-delay:-5s;}
+@keyframes orb-float{from{transform:translate(0,0) scale(1);}to{transform:translate(40px,40px) scale(1.1);}}
+
+.burger{position:fixed;top:16px;left:16px;z-index:1100;width:44px;height:44px;background:var(--t-surface);border:1.5px solid var(--t-border);border-radius:12px;color:var(--primary);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);transition:all .25s;}
+.burger:hover{transform:scale(1.07);box-shadow:0 4px 18px rgba(0,0,0,.35);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1000;opacity:0;pointer-events:none;transition:opacity .35s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.sidebar{position:fixed;top:0;left:0;height:100vh;width:292px;background:var(--t-sidebar);z-index:1050;transform:translateX(-100%);transition:transform .38s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:6px 0 32px rgba(0,0,0,.5);border-right:1px solid var(--t-sidebar-border);}
+.sidebar.open{transform:translateX(0);}
+.sb-head{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 16px;border-bottom:1px solid var(--t-sidebar-border);flex-shrink:0;}
+.sb-head-title{font-size:1rem;font-weight:800;color:var(--primary);display:flex;align-items:center;gap:8px;}
+.sb-close{background:rgba(255,255,255,.08);border:1px solid var(--t-sidebar-border);color:var(--t-sidebar-text);border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .2s;}
+.sb-close:hover{background:rgba(255,255,255,.18);}
+.sb-body{flex:1;overflow-y:auto;padding-bottom:20px;}
+.sb-body::-webkit-scrollbar{width:4px;}
+.sb-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px;}
+.sb-sec{padding:16px 16px 12px;}
+.sb-sec+.sb-sec{border-top:1px solid var(--t-sidebar-border);}
+.sb-sec-title{font-size:.69rem;font-weight:800;color:var(--t-muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.sb-count{background:rgba(255,255,255,.1);color:var(--primary);border-radius:99px;padding:1px 8px;font-size:.65rem;}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.theme-card{border-radius:12px;border:2px solid var(--t-sidebar-border);padding:10px 8px 8px;cursor:pointer;transition:all .25s;background:var(--t-sidebar-card);}
+.theme-card:hover{border-color:var(--primary);transform:translateY(-2px);}
+.theme-card.active{border-color:var(--primary);box-shadow:0 0 0 3px rgba(116,198,157,.15);}
+.swatches{display:flex;gap:2px;margin-bottom:7px;border-radius:7px;overflow:hidden;height:20px;}
+.swatch{flex:1;}
+.theme-name{font-size:.71rem;font-weight:700;color:var(--t-sidebar-text);text-align:center;display:flex;align-items:center;justify-content:center;gap:3px;}
+.active-dot{width:6px;height:6px;background:var(--primary);border-radius:50%;display:inline-block;}
+.hist-empty{text-align:center;padding:20px 10px;color:var(--t-muted);font-size:.8rem;line-height:1.7;}
+.hist-item{background:var(--t-sidebar-card);border:1px solid var(--t-sidebar-border);border-radius:12px;padding:12px 12px 10px;margin-bottom:8px;transition:all .2s;animation:fade-up .3s ease;}
+.hist-item:hover{background:rgba(255,255,255,.07);}
+.hist-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:8px;}
+.hist-name{font-size:.88rem;font-weight:800;color:var(--primary);}
+.hist-sub{font-size:.64rem;color:var(--t-muted);margin-top:2px;}
+.hist-badge{background:rgba(255,255,255,.08);border-radius:99px;padding:3px 8px;font-size:.62rem;font-weight:700;color:var(--t-muted);white-space:nowrap;flex-shrink:0;}
+.hist-metrics{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.hm{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:5px 8px;}
+.hm-l{font-size:.62rem;color:var(--t-muted);font-weight:600;display:block;}
+.hm-v{font-size:.8rem;color:var(--t-sidebar-text);font-weight:800;}
+
+.container{max-width:900px;margin:0 auto;position:relative;z-index:1;padding-top:16px;}
+header{text-align:center;margin-bottom:36px;}
+.logo{font-size:52px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 4px 12px rgba(116,198,157,.5));animation:sway 4s ease-in-out infinite;}
+@keyframes sway{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+header h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+header p{color:var(--t-muted);font-size:.9rem;margin-top:6px;}
+
+.card{background:var(--t-surface);border:1px solid var(--t-border);border-radius:20px;padding:28px;margin-bottom:20px;backdrop-filter:blur(16px);transition:transform .3s,box-shadow .3s;}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.card-title{font-size:1rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.card-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--primary),transparent);}
+
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+@media(max-width:660px){.grid-3,.grid-2{grid-template-columns:1fr;}header h1{font-size:1.5rem;}}
+
+.field label{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--t-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.req-tag{font-size:.64rem;background:rgba(224,84,84,.2);color:#f4845f;border-radius:6px;padding:2px 7px;text-transform:none;letter-spacing:0;font-weight:700;}
+.opt-tag{font-size:.64rem;background:rgba(139,98,57,.3);color:#d4a96a;border-radius:6px;padding:2px 7px;text-transform:none;letter-spacing:0;font-weight:700;}
+.field input[type=text],.field input[type=number]{width:100%;background:var(--t-input-bg);border:1.5px solid var(--t-input-border);border-radius:12px;padding:12px 16px;font-size:.95rem;font-family:inherit;color:var(--t-text);outline:none;transition:border-color .3s,background .3s,box-shadow .3s;}
+.field input:focus{border-color:var(--primary);background:rgba(82,183,136,.1);box-shadow:0 0 0 3px rgba(82,183,136,.12);}
+.field input::placeholder{color:var(--t-placeholder);}
+.field input::-webkit-inner-spin-button{display:none;}
+
+.len-wrap{display:flex;flex-direction:column;gap:8px;}
+.len-input-row{display:flex;gap:8px;align-items:center;}
+.len-input-row input{flex:1;}
+.btn-avg-toggle{background:rgba(0,119,182,.2);border:1.5px solid rgba(72,202,228,.25);color:var(--secondary);border-radius:10px;padding:10px 11px;cursor:pointer;font-family:inherit;font-size:.72rem;font-weight:700;white-space:nowrap;transition:all .25s;display:flex;align-items:center;gap:4px;}
+.btn-avg-toggle:hover{background:rgba(0,119,182,.35);}
+.btn-avg-toggle.active{background:rgba(0,119,182,.45);border-color:var(--secondary);color:#fff;}
+.avg-panel{overflow:hidden;max-height:0;transition:max-height .45s cubic-bezier(.4,0,.2,1),opacity .35s,margin .3s;opacity:0;}
+.avg-panel.open{max-height:700px;opacity:1;margin-top:4px;}
+.avg-inner{background:rgba(0,100,160,.1);border:1px solid rgba(72,202,228,.18);border-radius:14px;padding:18px;}
+.mode-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.mode-tab{flex:1;padding:8px 6px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--t-muted);font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .25s;text-align:center;}
+.mode-tab.active{background:rgba(0,119,182,.35);border-color:var(--secondary);color:var(--secondary);}
+.mode-tab:hover:not(.active){background:rgba(255,255,255,.08);color:var(--t-text);}
+.paste-mode,.manual-mode{display:none;}
+.paste-mode.visible,.manual-mode.visible{display:block;}
+.paste-hint{font-size:.74rem;color:var(--t-muted);margin-bottom:8px;line-height:1.6;}
+.paste-hint strong{color:var(--secondary);}
+.paste-area{width:100%;min-height:90px;resize:vertical;background:rgba(255,255,255,.05);border:1.5px solid rgba(72,202,228,.2);border-radius:10px;padding:12px 14px;font-family:'Nunito',monospace;font-size:.83rem;color:var(--t-text);outline:none;line-height:1.7;transition:border-color .25s;}
+.paste-area:focus{border-color:var(--secondary);background:rgba(72,202,228,.07);}
+.paste-area::placeholder{color:var(--t-placeholder);font-size:.76rem;}
+.parse-stats{margin-top:10px;padding:8px 12px;border-radius:10px;background:rgba(116,198,157,.1);border:1px solid rgba(116,198,157,.2);display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:.78rem;font-weight:700;}
+.parse-stats.hidden{display:none;}
+.stat-chip{display:flex;align-items:center;gap:4px;color:var(--t-muted);}
+.stat-chip span{color:var(--primary);}
+.stat-chip.warn span{color:var(--accent);}
+.avg-items{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;max-height:180px;overflow-y:auto;padding-right:4px;}
+.avg-items::-webkit-scrollbar{width:4px;}
+.avg-items::-webkit-scrollbar-thumb{background:rgba(72,202,228,.3);border-radius:4px;}
+.avg-item{display:flex;gap:8px;align-items:center;animation:fade-up .2s ease;}
+.avg-item-num{font-size:.74rem;color:var(--t-muted);font-weight:700;min-width:24px;text-align:right;}
+.avg-item input{flex:1;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;font-size:.85rem;font-family:inherit;color:var(--t-text);outline:none;transition:border-color .2s;}
+.avg-item input:focus{border-color:var(--secondary);}
+.btn-rm-avg{background:rgba(193,68,14,.15);border:1px solid rgba(193,68,14,.25);color:#f4845f;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:.8rem;line-height:1;transition:all .2s;}
+.btn-rm-avg:hover{background:rgba(193,68,14,.35);}
+.btn-add-meas{background:rgba(0,119,182,.2);border:1.5px solid rgba(72,202,228,.22);color:var(--secondary);border-radius:9px;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:.78rem;font-weight:700;transition:all .2s;margin-bottom:12px;display:inline-block;}
+.btn-add-meas:hover{background:rgba(0,119,182,.35);}
+.avg-result-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);}
+.avg-pill{background:rgba(116,198,157,.15);border:1px solid rgba(116,198,157,.25);color:var(--primary);border-radius:10px;padding:7px 14px;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:5px;}
+.avg-pill .av{font-size:1rem;font-weight:800;}
+.btn-use-avg{background:linear-gradient(135deg,rgba(45,106,79,.6),rgba(0,119,182,.4));border:1.5px solid rgba(82,183,136,.4);color:var(--primary);border-radius:10px;padding:8px 18px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:700;transition:all .25s;margin-left:auto;}
+.btn-use-avg:hover{transform:translateY(-1px);}
+.btn-use-avg:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+.day-table-wrap{overflow-x:auto;border-radius:12px;margin-bottom:16px;}
+table{width:100%;border-collapse:collapse;font-size:.88rem;}
+thead th{background:var(--t-th-bg);color:var(--primary);font-weight:700;font-size:.75rem;letter-spacing:.8px;text-transform:uppercase;padding:12px 14px;text-align:left;}
+thead th:first-child{border-radius:10px 0 0 0;}thead th:last-child{border-radius:0 10px 0 0;text-align:center;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.05);transition:background .2s;}
+tbody tr:hover{background:var(--t-row-hover);}
+tbody td{padding:8px 10px;}
+tbody td input{width:100%;background:var(--t-input-bg);border:1.5px solid var(--t-input-border);border-radius:8px;padding:8px 10px;font-size:.88rem;font-family:inherit;color:var(--t-text);outline:none;transition:border-color .25s;}
+tbody td input:focus{border-color:var(--secondary);}
+.day-badge{background:linear-gradient(135deg,#1b4332,#023e8a);color:var(--primary);border-radius:8px;padding:6px 12px;font-weight:700;font-size:.85rem;display:inline-block;min-width:56px;text-align:center;}
+.btn-del{background:rgba(193,68,14,.2);border:1px solid rgba(193,68,14,.3);color:#f4845f;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:1rem;transition:all .2s;display:block;margin:auto;line-height:1;}
+.btn-del:hover{background:rgba(193,68,14,.4);transform:scale(1.1);}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+.btn-add{background:linear-gradient(135deg,rgba(45,106,79,.5),rgba(27,67,50,.5));border:1.5px solid rgba(82,183,136,.4);color:var(--primary);border-radius:12px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:.88rem;font-weight:700;transition:all .25s;display:flex;align-items:center;gap:6px;}
+.btn-add:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(82,183,136,.2);}
+.btn-clear{background:rgba(139,98,57,.2);border:1.5px solid rgba(139,98,57,.3);color:var(--t-muted);border-radius:12px;padding:10px 20px;cursor:pointer;font-family:inherit;font-size:.88rem;font-weight:700;transition:all .25s;}
+.btn-clear:hover{color:var(--t-text);}
+.btn-calc{width:100%;padding:16px;border:none;border-radius:16px;font-family:inherit;font-size:1.05rem;font-weight:800;letter-spacing:.5px;cursor:pointer;background:var(--t-calc-btn);background-size:200% 200%;color:white;position:relative;overflow:hidden;animation:gradient-shift 4s ease infinite;box-shadow:0 6px 24px rgba(45,106,79,.4);margin-bottom:28px;transition:transform .3s,box-shadow .3s;}
+.btn-calc:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(45,106,79,.5);}
+.btn-calc::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);transition:transform .5s;}
+.btn-calc:hover::after{transform:translateX(100%);}
+@keyframes gradient-shift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+
+.error-msg{background:rgba(193,68,14,.15);border:1px solid rgba(193,68,14,.4);color:#f4845f;border-radius:12px;padding:12px 18px;font-size:.88rem;font-weight:600;margin-bottom:20px;display:none;}
+#results{display:none;}
+#results.show{display:block;animation:fade-up .5s ease;}
+@keyframes fade-up{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;}
+.res-card{border-radius:18px;padding:22px 20px;position:relative;overflow:hidden;transition:transform .3s;animation:card-pop .5s ease both;}
+.res-card:hover{transform:translateY(-4px) scale(1.01);}
+.res-card::before{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid rgba(255,255,255,.15);pointer-events:none;}
+@keyframes card-pop{from{opacity:0;transform:scale(.92) translateY(16px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.res-card:nth-child(1){animation-delay:.05s}.res-card:nth-child(2){animation-delay:.10s}.res-card:nth-child(3){animation-delay:.15s}
+.res-card:nth-child(4){animation-delay:.20s}.res-card:nth-child(5){animation-delay:.25s}.res-card:nth-child(6){animation-delay:.30s}.res-card:nth-child(7){animation-delay:.35s}
+.rc-gp {background:linear-gradient(145deg,#1b4332,#2d6a4f);}
+.rc-gi {background:linear-gradient(145deg,#023e8a,#0077b6);}
+.rc-mgt{background:linear-gradient(145deg,#5c3d1e,#8b6239);}
+.rc-gri{background:linear-gradient(145deg,#1a3a52,#2980b9);}
+.rc-svi1{background:linear-gradient(145deg,#3d0c02,#7b3f00);}
+.rc-svi2{background:linear-gradient(145deg,#2d0d4e,#6b2fa0);}
+.rc-t50{background:linear-gradient(145deg,#0d3040,#1a6b7a);}
+.res-icon{font-size:2rem;margin-bottom:10px;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));}
+.res-label{font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2px;}
+.res-name{font-size:.95rem;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:12px;}
+.res-value{font-size:2.2rem;font-weight:800;color:#fff;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.3);}
+.res-value.na{font-size:1.4rem;color:rgba(255,255,255,.5);}
+.res-unit{font-size:.8rem;font-weight:600;color:rgba(255,255,255,.5);margin-left:4px;}
+.res-formula{margin-top:10px;font-size:.72rem;color:rgba(255,255,255,.4);font-style:italic;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;line-height:1.5;}
+.gp-bar-bg{height:6px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-top:14px;}
+.gp-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#52b788,#74c69d);transition:width 1s cubic-bezier(.34,1.56,.64,1);width:0%;}
+.gp-lbl{font-size:.7rem;color:rgba(255,255,255,.4);margin-top:4px;}
+
+.summary-banner{background:linear-gradient(135deg,rgba(45,106,79,.3),rgba(0,119,182,.25));border:1px solid rgba(116,198,157,.25);border-radius:16px;padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.summary-banner .sbi{font-size:2rem;}
+.summary-banner .sbt h3{font-size:1.05rem;font-weight:700;color:var(--primary);}
+.summary-banner .sbt p{font-size:.82rem;color:var(--t-muted);margin-top:2px;}
+.seed-badge{background:rgba(233,167,25,.15);border:1px solid rgba(233,167,25,.3);color:var(--accent);border-radius:8px;padding:2px 10px;font-size:.8rem;font-weight:700;display:inline-block;margin-left:8px;}
+hr.earthy{border:none;height:1px;background:linear-gradient(90deg,transparent,rgba(116,198,157,.3),transparent);margin:8px 0 20px;}
+.tip{font-size:.72rem;color:var(--t-muted);margin-top:8px;line-height:1.6;}
+.tip strong{color:var(--primary);}
+.sec-divider{font-size:.7rem;font-weight:700;color:var(--t-muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 12px;display:flex;align-items:center;gap:8px;}
+.sec-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08);}
+</style>
+</head>
+<body>
+
+<button class="burger" onclick="toggleSidebar()">☰</button>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sb-head">
+    <div class="sb-head-title">🌿 Lab Settings</div>
+    <button class="sb-close" onclick="closeSidebar()">✕</button>
+  </div>
+  <div class="sb-body">
+    <div class="sb-sec">
+      <div class="sb-sec-title">🎨 Themes</div>
+      <div class="theme-grid" id="themeGrid"></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-title">🕒 History <span class="sb-count" id="histCount">0</span></div>
+      <div id="historyList"><div class="hist-empty">🌱<br>No calculations yet.<br>Run your first analysis!</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <div class="logo">🌱</div>
+    <h1>Seed Germination Calculator</h1>
+    <p>Enter germination data to compute all key seed &amp; seedling vigour metrics</p>
+  </header>
+
+  <!-- Basic Parameters -->
+  <div class="card">
+    <div class="card-title">🌍 Basic Parameters</div>
+
+    <div style="margin-bottom:16px">
+      <div class="field">
+        <label>Seed / Crop Name <span class="req-tag">Required</span></label>
+        <input type="text" id="seedName" placeholder="e.g. Wheat, Maize, Tomato, Rice…">
+      </div>
+    </div>
+
+    <div class="sec-divider">📏 Seedling Measurements</div>
+
+    <div class="grid-3" style="margin-bottom:16px">
+      <!-- Total Seeds -->
+      <div class="field">
+        <label>Total Seeds (N)</label>
+        <input type="number" id="totalSeeds" placeholder="e.g. 100" min="1">
+      </div>
+      <!-- Radicle / Root Length -->
+      <div class="field">
+        <label>Avg. Root Length (cm) <span class="opt-tag">Optional</span></label>
+        <div class="len-wrap">
+          <div class="len-input-row">
+            <input type="number" id="radicleLen" placeholder="e.g. 5.20" step="0.01" min="0" oninput="clearHL('radicleLen')">
+            <button class="btn-avg-toggle" id="toggle-radicle" onclick="toggleAvg('radicle')">📐 Avg</button>
+          </div>
+          <div class="avg-panel" id="panel-radicle"><div class="avg-inner">
+            <div class="mode-tabs">
+              <button class="mode-tab active" id="tab-radicle-paste" onclick="switchMode('radicle','paste')">📋 Paste / Bulk</button>
+              <button class="mode-tab" id="tab-radicle-manual" onclick="switchMode('radicle','manual')">➕ One by One</button>
+            </div>
+            <div class="paste-mode visible" id="paste-radicle">
+              <div class="paste-hint">Paste <strong>root length</strong> values — comma, space, newline or tab separated.</div>
+              <textarea class="paste-area" id="paste-area-radicle" placeholder="5.2, 4.8, 6.1, 5.5…&#10;(Paste from Excel / Sheets)" oninput="parsePaste('radicle')"></textarea>
+              <div class="parse-stats hidden" id="stats-radicle">
+                <div class="stat-chip"><span id="sc-radicle">0</span> values</div>
+                <div class="stat-chip warn" id="sw-radicle" style="display:none"><span id="ss-radicle">0</span> skipped</div>
+                <div class="stat-chip">Sum: <span id="ssum-radicle">—</span></div>
+              </div>
+            </div>
+            <div class="manual-mode" id="manual-radicle">
+              <div class="avg-items" id="items-radicle"></div>
+              <button class="btn-add-meas" onclick="addMeas('radicle')">＋ Add</button>
+            </div>
+            <div class="avg-result-bar">
+              <div class="avg-pill">Avg: <span class="av" id="avg-val-radicle">—</span> cm</div>
+              <button class="btn-use-avg" id="use-radicle" onclick="useAvg('radicle')" disabled>✔ Use</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <!-- Plumule / Shoot Length -->
+      <div class="field">
+        <label>Avg. Shoot Length (cm) <span class="opt-tag">Optional</span></label>
+        <div class="len-wrap">
+          <div class="len-input-row">
+            <input type="number" id="plumuleLen" placeholder="e.g. 4.80" step="0.01" min="0" oninput="clearHL('plumuleLen')">
+            <button class="btn-avg-toggle" id="toggle-plumule" onclick="toggleAvg('plumule')">📐 Avg</button>
+          </div>
+          <div class="avg-panel" id="panel-plumule"><div class="avg-inner">
+            <div class="mode-tabs">
+              <button class="mode-tab active" id="tab-plumule-paste" onclick="switchMode('plumule','paste')">📋 Paste / Bulk</button>
+              <button class="mode-tab" id="tab-plumule-manual" onclick="switchMode('plumule','manual')">➕ One by One</button>
+            </div>
+            <div class="paste-mode visible" id="paste-plumule">
+              <div class="paste-hint">Paste <strong>shoot length</strong> values — comma, space, newline or tab separated.</div>
+              <textarea class="paste-area" id="paste-area-plumule" placeholder="4.1, 3.9, 5.2, 4.6…&#10;(Paste from Excel / Sheets)" oninput="parsePaste('plumule')"></textarea>
+              <div class="parse-stats hidden" id="stats-plumule">
+                <div class="stat-chip"><span id="sc-plumule">0</span> values</div>
+                <div class="stat-chip warn" id="sw-plumule" style="display:none"><span id="ss-plumule">0</span> skipped</div>
+                <div class="stat-chip">Sum: <span id="ssum-plumule">—</span></div>
+              </div>
+            </div>
+            <div class="manual-mode" id="manual-plumule">
+              <div class="avg-items" id="items-plumule"></div>
+              <button class="btn-add-meas" onclick="addMeas('plumule')">＋ Add</button>
+            </div>
+            <div class="avg-result-bar">
+              <div class="avg-pill">Avg: <span class="av" id="avg-val-plumule">—</span> cm</div>
+              <button class="btn-use-avg" id="use-plumule" onclick="useAvg('plumule')" disabled>✔ Use</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dry Weight row -->
+    <div class="grid-3">
+      <div class="field">
+        <label>Seedling Dry Weight (mg) <span class="opt-tag">Optional</span></label>
+        <div class="len-wrap">
+          <div class="len-input-row">
+            <input type="number" id="dryWeight" placeholder="e.g. 12.50" step="0.001" min="0" oninput="clearHL('dryWeight')">
+            <button class="btn-avg-toggle" id="toggle-dw" onclick="toggleAvg('dw')">📐 Avg</button>
+          </div>
+          <div class="avg-panel" id="panel-dw"><div class="avg-inner">
+            <div class="mode-tabs">
+              <button class="mode-tab active" id="tab-dw-paste" onclick="switchMode('dw','paste')">📋 Paste / Bulk</button>
+              <button class="mode-tab" id="tab-dw-manual" onclick="switchMode('dw','manual')">➕ One by One</button>
+            </div>
+            <div class="paste-mode visible" id="paste-dw">
+              <div class="paste-hint">Paste <strong>dry weight</strong> values (mg) — comma, space, newline or tab separated.</div>
+              <textarea class="paste-area" id="paste-area-dw" placeholder="12.3, 11.8, 13.1, 12.5…&#10;(Paste from Excel / Sheets)" oninput="parsePaste('dw')"></textarea>
+              <div class="parse-stats hidden" id="stats-dw">
+                <div class="stat-chip"><span id="sc-dw">0</span> values</div>
+                <div class="stat-chip warn" id="sw-dw" style="display:none"><span id="ss-dw">0</span> skipped</div>
+                <div class="stat-chip">Sum: <span id="ssum-dw">—</span></div>
+              </div>
+            </div>
+            <div class="manual-mode" id="manual-dw">
+              <div class="avg-items" id="items-dw"></div>
+              <button class="btn-add-meas" onclick="addMeas('dw')">＋ Add</button>
+            </div>
+            <div class="avg-result-bar">
+              <div class="avg-pill">Avg: <span class="av" id="avg-val-dw">—</span> mg</div>
+              <button class="btn-use-avg" id="use-dw" onclick="useAvg('dw')" disabled>✔ Use</button>
+            </div>
+          </div></div>
+        </div>
+      </div>
+      <div style="padding-top:32px">
+        <p class="tip">💡 <strong>Root</strong> = Radicle · <strong>Shoot</strong> = Plumule · <strong>Dry Weight</strong> = oven-dried seedling mass (mg). All three are optional but needed for SVI-I &amp; SVI-II. Click <strong>📐 Avg</strong> and paste 100 values instantly from Excel.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Germination -->
+  <div class="card">
+    <div class="card-title">📅 Daily Germination Data</div>
+    <div class="day-table-wrap">
+      <table>
+        <thead><tr><th>Day (d)</th><th>Germinated on This Day (n)</th><th>Cumulative</th><th style="text-align:center">Remove</th></tr></thead>
+        <tbody id="dayBody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn-add" onclick="addDay()">＋ Add Day</button>
+      <button class="btn-clear" onclick="clearDays()">✕ Clear All</button>
+    </div>
+    <p class="tip" style="margin-top:10px">📌 <strong>n</strong> = seeds germinated on that specific day (not cumulative) · <strong>d</strong> = day number from the start of the test.</p>
+  </div>
+
+  <div class="error-msg" id="errMsg"></div>
+  <button class="btn-calc" onclick="calculate()">🌿 Calculate Germination Metrics</button>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="summary-banner">
+      <span class="sbi">🔬</span>
+      <div class="sbt"><h3 id="sumTitle">Analysis Complete</h3><p id="sumSub"></p></div>
+    </div>
+    <hr class="earthy">
+    <div class="results-grid">
+
+      <div class="res-card rc-gp">
+        <span class="res-icon">🌾</span><div class="res-label">Metric 01</div>
+        <div class="res-name">Germination Percentage</div>
+        <div><span class="res-value" id="v-gp">—</span><span class="res-unit">%</span></div>
+        <div class="gp-bar-bg"><div class="gp-bar-fill" id="gp-bar"></div></div>
+        <div class="gp-lbl" id="gp-lbl"></div>
+        <div class="res-formula">GP = (Σn / N) × 100</div>
+      </div>
+
+      <div class="res-card rc-gi">
+        <span class="res-icon">⚡</span><div class="res-label">Metric 02</div>
+        <div class="res-name">Germination Index</div>
+        <div><span class="res-value" id="v-gi">—</span></div>
+        <div class="res-formula">GI = Σ(n / d) — Maguire (1962)<br>Higher value = faster speed</div>
+      </div>
+
+      <div class="res-card rc-mgt">
+        <span class="res-icon">⏳</span><div class="res-label">Metric 03</div>
+        <div class="res-name">Mean Germination Time</div>
+        <div><span class="res-value" id="v-mgt">—</span><span class="res-unit">days</span></div>
+        <div class="res-formula">MGT = Σ(n × d) / Σn<br>n = germinated/day · d = day no. · Σn = total germinated</div>
+      </div>
+
+      <div class="res-card rc-gri">
+        <span class="res-icon">📈</span><div class="res-label">Metric 04</div>
+        <div class="res-name">Germination Rate Index</div>
+        <div><span class="res-value" id="v-gri">—</span></div>
+        <div class="res-formula">GRI = G₁/D₁ + G₂/D₂ + … + Gₙ/Dₙ<br>Gₙ = <strong>cumulative</strong> germination % up to day n · Dₙ = day number</div>
+      </div>
+
+      <div class="res-card rc-svi1">
+        <span class="res-icon">🌰</span><div class="res-label">Metric 05</div>
+        <div class="res-name">Seedling Vigour Index I</div>
+        <div><span class="res-value" id="v-svi1">—</span></div>
+        <div class="res-formula">SVI-I = GP × (Shoot + Root length)<br>Needs root &amp; shoot length</div>
+      </div>
+
+      <div class="res-card rc-svi2">
+        <span class="res-icon">⚗️</span><div class="res-label">Metric 06</div>
+        <div class="res-name">Seedling Vigour Index II</div>
+        <div><span class="res-value" id="v-svi2">—</span></div>
+        <div class="res-formula">SVI-II = GP × Mean seedling dry weight<br>Needs dry weight (mg)</div>
+      </div>
+
+      <div class="res-card rc-t50">
+        <span class="res-icon">⏱️</span><div class="res-label">Metric 07</div>
+        <div class="res-name">Time to 50% Germination</div>
+        <div><span class="res-value" id="v-t50">—</span><span class="res-unit" id="u-t50">days</span></div>
+        <div class="res-formula">
+T₅₀ = tᵢ + [(N/2 − nᵢ)(tⱼ − tᵢ)] / (nⱼ − nᵢ)<br>
+N = final germinated seeds · nᵢ = cumulative count just before 50% germination · nⱼ = cumulative count just after 50% germination
+</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Themes ────────────────────────────────────────────────────────
+const THEMES=[
+  {id:'earthy',name:'Dark Earthy',emoji:'🌿',sw:['#0d2018','#1b4332','#74c69d','#e9a719'],bg:'radial-gradient(ellipse at 20% 80%,rgba(92,61,30,.6) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(0,119,182,.3) 0%,transparent 50%),linear-gradient(160deg,#0d2018 0%,#1b4332 30%,#1a3a52 60%,#2c1a0e 100%)',v:{'--primary':'#74c69d','--secondary':'#48cae4','--accent':'#e9a719','--t-text':'#f0e6d3','--t-muted':'#c4aa88','--t-surface':'rgba(255,255,255,0.07)','--t-border':'rgba(255,255,255,0.15)','--t-input-bg':'rgba(255,255,255,0.06)','--t-input-border':'rgba(255,255,255,0.12)','--t-placeholder':'rgba(255,255,255,0.25)','--t-row-hover':'rgba(255,255,255,0.04)','--t-th-bg':'rgba(82,183,136,0.12)','--t-sidebar':'rgba(8,20,14,0.98)','--t-sidebar-text':'#f0e6d3','--t-sidebar-border':'rgba(255,255,255,0.08)','--t-sidebar-card':'rgba(255,255,255,0.04)','--t-calc-btn':'linear-gradient(135deg,#2d6a4f,#0077b6,#52b788)','--t-orb1':'rgba(82,183,136,0.15)','--t-orb2':'rgba(0,119,182,0.15)'}},
+  {id:'parchment',name:'Parchment',emoji:'📜',sw:['#F7F1DE','#B0BA99','#9D6638','#4E220F'],bg:'radial-gradient(ellipse at 30% 20%,rgba(176,186,153,.5) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(157,102,56,.3) 0%,transparent 50%),linear-gradient(160deg,#F7F1DE 0%,#EDE3C4 50%,#DDD0B0 100%)',v:{'--primary':'#9D6638','--secondary':'#6b3a1f','--accent':'#7a4f1a','--t-text':'#2c1a0e','--t-muted':'#7a5535','--t-surface':'rgba(78,34,15,0.08)','--t-border':'rgba(78,34,15,0.2)','--t-input-bg':'rgba(255,255,255,0.6)','--t-input-border':'rgba(78,34,15,0.18)','--t-placeholder':'rgba(78,34,15,0.3)','--t-row-hover':'rgba(78,34,15,0.05)','--t-th-bg':'rgba(157,102,56,0.15)','--t-sidebar':'rgba(78,34,15,0.97)','--t-sidebar-text':'#f0e6d3','--t-sidebar-border':'rgba(255,255,255,0.1)','--t-sidebar-card':'rgba(255,255,255,0.06)','--t-calc-btn':'linear-gradient(135deg,#9D6638,#6b3a1f,#B0BA99)','--t-orb1':'rgba(157,102,56,0.25)','--t-orb2':'rgba(176,186,153,0.2)'}},
+  {id:'purple',name:'Neon Bloom',emoji:'💜',sw:['#1a0d40','#792CA2','#C13383','#E05454'],bg:'radial-gradient(ellipse at 20% 20%,rgba(121,44,162,.35) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(224,84,84,.2) 0%,transparent 50%),linear-gradient(160deg,#100826 0%,#1e0d48 35%,#130520 70%,#200010 100%)',v:{'--primary':'#C13383','--secondary':'#E05454','--accent':'#f0a0c0','--t-text':'#f5e0f5','--t-muted':'#c090c8','--t-surface':'rgba(193,51,131,0.08)','--t-border':'rgba(193,51,131,0.22)','--t-input-bg':'rgba(255,255,255,0.05)','--t-input-border':'rgba(193,51,131,0.18)','--t-placeholder':'rgba(255,255,255,0.22)','--t-row-hover':'rgba(193,51,131,0.06)','--t-th-bg':'rgba(193,51,131,0.12)','--t-sidebar':'rgba(14,4,32,0.98)','--t-sidebar-text':'#f5e0f5','--t-sidebar-border':'rgba(193,51,131,0.15)','--t-sidebar-card':'rgba(193,51,131,0.06)','--t-calc-btn':'linear-gradient(135deg,#443199,#C13383,#E05454)','--t-orb1':'rgba(193,51,131,0.18)','--t-orb2':'rgba(224,84,84,0.12)'}},
+  {id:'noir',name:'Noir',emoji:'🖤',sw:['#000000','#1F150C','#412D15','#E1DCC9'],bg:'radial-gradient(ellipse at 30% 30%,rgba(65,45,21,.35) 0%,transparent 50%),linear-gradient(160deg,#000 0%,#0a0704 40%,#1F150C 80%,#000 100%)',v:{'--primary':'#E1DCC9','--secondary':'#c4b99a','--accent':'#d4c090','--t-text':'#E1DCC9','--t-muted':'#8a7a65','--t-surface':'rgba(65,45,21,0.2)','--t-border':'rgba(225,220,201,0.1)','--t-input-bg':'rgba(65,45,21,0.2)','--t-input-border':'rgba(225,220,201,0.1)','--t-placeholder':'rgba(225,220,201,0.25)','--t-row-hover':'rgba(225,220,201,0.03)','--t-th-bg':'rgba(225,220,201,0.07)','--t-sidebar':'rgba(0,0,0,0.99)','--t-sidebar-text':'#E1DCC9','--t-sidebar-border':'rgba(225,220,201,0.08)','--t-sidebar-card':'rgba(65,45,21,0.2)','--t-calc-btn':'linear-gradient(135deg,#1F150C,#412D15,#a09070)','--t-orb1':'rgba(65,45,21,0.4)','--t-orb2':'rgba(225,220,201,0.05)'}},
+  {id:'forest',name:'Forest Teal',emoji:'🌲',sw:['#091413','#285A48','#408A71','#B0E4CC'],bg:'radial-gradient(ellipse at 20% 80%,rgba(40,90,72,.55) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(64,138,113,.25) 0%,transparent 50%),linear-gradient(160deg,#060e0d 0%,#0d2018 35%,#152d22 70%,#060e0d 100%)',v:{'--primary':'#B0E4CC','--secondary':'#408A71','--accent':'#7dd4a8','--t-text':'#e0f5ec','--t-muted':'#6ab89a','--t-surface':'rgba(40,90,72,0.2)','--t-border':'rgba(176,228,204,0.18)','--t-input-bg':'rgba(40,90,72,0.18)','--t-input-border':'rgba(176,228,204,0.15)','--t-placeholder':'rgba(176,228,204,0.25)','--t-row-hover':'rgba(176,228,204,0.04)','--t-th-bg':'rgba(176,228,204,0.1)','--t-sidebar':'rgba(4,10,9,0.98)','--t-sidebar-text':'#e0f5ec','--t-sidebar-border':'rgba(176,228,204,0.1)','--t-sidebar-card':'rgba(40,90,72,0.18)','--t-calc-btn':'linear-gradient(135deg,#285A48,#408A71,#B0E4CC)','--t-orb1':'rgba(64,138,113,0.2)','--t-orb2':'rgba(176,228,204,0.1)'}},
+  {id:'ocean',name:'Ocean Blue',emoji:'🌊',sw:['#0a1a35','#2C5EAD','#4BB8FA','#C4E2F5'],bg:'radial-gradient(ellipse at 20% 80%,rgba(44,94,173,.5) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(75,184,250,.18) 0%,transparent 50%),linear-gradient(160deg,#060e1e 0%,#0d2040 35%,#172e60 70%,#080f20 100%)',v:{'--primary':'#4BB8FA','--secondary':'#C4E2F5','--accent':'#90d0ff','--t-text':'#e0f0ff','--t-muted':'#7ab0d8','--t-surface':'rgba(44,94,173,0.15)','--t-border':'rgba(75,184,250,0.2)','--t-input-bg':'rgba(44,94,173,0.12)','--t-input-border':'rgba(75,184,250,0.15)','--t-placeholder':'rgba(196,226,245,0.25)','--t-row-hover':'rgba(75,184,250,0.05)','--t-th-bg':'rgba(75,184,250,0.1)','--t-sidebar':'rgba(4,8,20,0.98)','--t-sidebar-text':'#e0f0ff','--t-sidebar-border':'rgba(75,184,250,0.1)','--t-sidebar-card':'rgba(44,94,173,0.12)','--t-calc-btn':'linear-gradient(135deg,#2C5EAD,#1591DC,#4BB8FA)','--t-orb1':'rgba(75,184,250,0.15)','--t-orb2':'rgba(196,226,245,0.08)'}}
+];
+let activeTheme='earthy';
+function buildThemeGrid(){
+  document.getElementById('themeGrid').innerHTML=THEMES.map(t=>`
+    <div class="theme-card ${t.id===activeTheme?'active':''}" onclick="applyTheme('${t.id}')">
+      <div class="swatches">${t.sw.map(c=>`<div class="swatch" style="background:${c}"></div>`).join('')}</div>
+      <div class="theme-name">${t.emoji} ${t.name} ${t.id===activeTheme?'<span class="active-dot"></span>':''}</div>
+    </div>`).join('');
+}
+function applyTheme(id){
+  const t=THEMES.find(x=>x.id===id);if(!t)return;
+  activeTheme=id;document.body.style.background=t.bg;
+  Object.entries(t.v).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+  buildThemeGrid();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+
+// ── History ───────────────────────────────────────────────────────
+const history=[];
+function saveHistory(d){history.unshift(d);if(history.length>10)history.pop();renderHistory();}
+function renderHistory(){
+  const el=document.getElementById('historyList');
+  document.getElementById('histCount').textContent=history.length;
+  if(!history.length){el.innerHTML='<div class="hist-empty">🌱<br>No calculations yet.</div>';return;}
+  el.innerHTML=history.map((h,i)=>`
+    <div class="hist-item">
+      <div class="hist-head">
+        <div><div class="hist-name">🌾 ${h.seedName}</div><div class="hist-sub">${h.date} · ${h.germinated}/${h.total} seeds</div></div>
+        <span class="hist-badge">#${history.length-i}</span>
+      </div>
+      <div class="hist-metrics">
+        <div class="hm"><span class="hm-l">GP</span><span class="hm-v">${h.GP}%</span></div>
+        <div class="hm"><span class="hm-l">GI</span><span class="hm-v">${h.GI}</span></div>
+        <div class="hm"><span class="hm-l">MGT</span><span class="hm-v">${h.MGT} d</span></div>
+        <div class="hm"><span class="hm-l">GRI</span><span class="hm-v">${h.GRI}</span></div>
+        <div class="hm"><span class="hm-l">SVI-I</span><span class="hm-v">${h.SVI1}</span></div>
+        <div class="hm"><span class="hm-l">SVI-II</span><span class="hm-v">${h.SVI2}</span></div>
+        <div class="hm"><span class="hm-l">T₅₀</span><span class="hm-v">${h.T50}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Avg Calculator ────────────────────────────────────────────────
+const measCnt={radicle:0,plumule:0,dw:0};
+function switchMode(type,mode){
+  ['paste','manual'].forEach(m=>{
+    document.getElementById(`${m}-${type}`).classList.toggle('visible',m===mode);
+    document.getElementById(`tab-${type}-${m}`).classList.toggle('active',m===mode);
+  });
+  if(mode==='manual'&&!document.querySelectorAll(`#items-${type} .avg-item`).length){addMeas(type);addMeas(type);addMeas(type);}
+  refreshAvg(type);
+}
+function parsePaste(type){
+  const raw=document.getElementById(`paste-area-${type}`).value;
+  const tokens=raw.split(/[\s,;\t\n\r]+/).filter(t=>t.trim());
+  let vals=[],skip=0;tokens.forEach(t=>{const n=parseFloat(t);isNaN(n)?skip++:vals.push(n);});
+  const st=document.getElementById(`stats-${type}`);
+  if(vals.length||skip){st.classList.remove('hidden');document.getElementById(`sc-${type}`).textContent=vals.length;document.getElementById(`ss-${type}`).textContent=skip;document.getElementById(`sw-${type}`).style.display=skip?'flex':'none';document.getElementById(`ssum-${type}`).textContent=vals.reduce((a,b)=>a+b,0).toFixed(3);}
+  else st.classList.add('hidden');
+  refreshAvg(type);
+}
+function addMeas(type){
+  const n=++measCnt[type];const wrap=document.getElementById(`items-${type}`);
+  const d=document.createElement('div');d.className='avg-item';d.id=`mi-${type}-${n}`;
+  d.innerHTML=`<span class="avg-item-num">${wrap.children.length+1}</span><input type="number" step="0.001" min="0" placeholder="0.000" oninput="refreshAvg('${type}')"/><button class="btn-rm-avg" onclick="rmMeas('${type}',${n})">✕</button>`;
+  wrap.appendChild(d);d.querySelector('input').focus();refreshAvg(type);
+}
+function rmMeas(type,id){
+  const el=document.getElementById(`mi-${type}-${id}`);
+  if(el){el.remove();document.querySelectorAll(`#items-${type} .avg-item`).forEach((e,i)=>e.querySelector('.avg-item-num').textContent=i+1);refreshAvg(type);}
+}
+function refreshAvg(type){
+  const pasteVis=document.getElementById(`paste-${type}`).classList.contains('visible');
+  let avg=null;
+  if(pasteVis){
+    const vals=document.getElementById(`paste-area-${type}`).value.split(/[\s,;\t\n\r]+/).filter(t=>t.trim()).map(t=>parseFloat(t)).filter(n=>!isNaN(n));
+    if(vals.length)avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  } else {
+    const ins=document.querySelectorAll(`#items-${type} .avg-item input`);
+    let s=0,c=0;ins.forEach(i=>{const v=parseFloat(i.value);if(!isNaN(v)&&v>=0){s+=v;c++;}});
+    if(c)avg=s/c;
+  }
+  document.getElementById(`avg-val-${type}`).textContent=avg!==null?avg.toFixed(3):'—';
+  document.getElementById(`use-${type}`).disabled=avg===null;
+}
+function useAvg(type){
+  const v=parseFloat(document.getElementById(`avg-val-${type}`).textContent);if(isNaN(v))return;
+  const fid=type==='radicle'?'radicleLen':type==='plumule'?'plumuleLen':'dryWeight';
+  const f=document.getElementById(fid);f.value=v.toFixed(3);
+  f.style.borderColor='var(--secondary)';f.style.background='rgba(72,202,228,.1)';f.style.boxShadow='0 0 0 3px rgba(72,202,228,.15)';
+  setTimeout(()=>{document.getElementById(`panel-${type}`).classList.remove('open');document.getElementById(`toggle-${type}`).classList.remove('active');},500);
+}
+function clearHL(id){const f=document.getElementById(id);f.style.borderColor='';f.style.background='';f.style.boxShadow='';}
+function toggleAvg(type){const p=document.getElementById(`panel-${type}`),b=document.getElementById(`toggle-${type}`);const o=p.classList.toggle('open');b.classList.toggle('active',o);}
+
+// ── Day Table ─────────────────────────────────────────────────────
+let dayCount=0;
+function addDay(){
+  dayCount++;
+  const tr=document.createElement('tr');tr.id=`row-${dayCount}`;
+  tr.innerHTML=`<td><span class="day-badge">Day ${dayCount}</span></td><td><input type="number" id="g-${dayCount}" min="0" placeholder="0" oninput="updateCum()"/></td><td id="cum-${dayCount}" style="color:var(--primary);font-weight:700;padding-left:14px;">0</td><td><button class="btn-del" onclick="rmRow(${dayCount})">✕</button></td>`;
+  document.getElementById('dayBody').appendChild(tr);
+  tr.style.animation='fade-up .3s ease';document.getElementById(`g-${dayCount}`).focus();updateCum();
+}
+function rmRow(id){const r=document.getElementById(`row-${id}`);if(r){r.style.opacity='0';setTimeout(()=>{r.remove();renumDays();updateCum();},200);}}
+function renumDays(){document.querySelectorAll('#dayBody tr').forEach((r,i)=>{const b=r.querySelector('.day-badge');if(b)b.textContent=`Day ${i+1}`;});}
+function updateCum(){let c=0;document.querySelectorAll('#dayBody tr').forEach(r=>{const i=r.querySelector('input'),cc=r.querySelector('td:nth-child(3)');if(i&&cc){c+=parseFloat(i.value)||0;cc.textContent=c;}});}
+function clearDays(){document.getElementById('dayBody').innerHTML='';dayCount=0;document.getElementById('results').classList.remove('show');hideErr();}
+
+// ── Calculate ─────────────────────────────────────────────────────
+function showErr(m){const e=document.getElementById('errMsg');e.textContent='⚠ '+m;e.style.display='block';e.scrollIntoView({behavior:'smooth',block:'center'});}
+function hideErr(){document.getElementById('errMsg').style.display='none';}
+function fmt(n,d=2){return(!isNaN(n)&&isFinite(n))?parseFloat(n.toFixed(d)).toString():'N/A';}
+function setVal(id,v,unit=''){
+  const el=document.getElementById(id);
+  if(v===null||v===undefined||isNaN(v)){el.textContent='N/A';el.className='res-value na';}
+  else{el.textContent=fmt(v);el.className='res-value';}
+}
+
+function calcT50(daily,totalGerm){
+  const target=totalGerm/2;
+  let prevCum=0,prevDay=0;
+  for(const d of daily){
+    const cum=prevCum+d.fn;
+    if(cum>=target){
+      if(cum===prevCum)return d.day;
+      return prevDay+(target-prevCum)*(d.day-prevDay)/(cum-prevCum);
+    }
+    prevCum=cum;prevDay=d.day;
+  }
+  return null;
+}
+
+function calculate(){
+  hideErr();
+  const sn=document.getElementById('seedName').value.trim();
+  if(!sn)return showErr('Seed / Crop Name is required.');
+  const N=parseFloat(document.getElementById('totalSeeds').value);
+  if(!N||N<=0)return showErr('Please enter a valid total number of seeds.');
+
+  const RL=parseFloat(document.getElementById('radicleLen').value);
+  const PL=parseFloat(document.getElementById('plumuleLen').value);
+  const DW=parseFloat(document.getElementById('dryWeight').value);
+  const hasLen=!isNaN(RL)&&RL>=0&&!isNaN(PL)&&PL>=0;
+  const hasDW=!isNaN(DW)&&DW>=0;
+
+  const rows=document.querySelectorAll('#dayBody tr');
+  if(!rows.length)return showErr('Please add at least one day of germination data.');
+  let total=0,ok=true,daily=[];
+  rows.forEach((r,i)=>{const v=parseFloat(r.querySelector('input')?.value)||0;if(v<0){showErr(`Day ${i+1} cannot be negative.`);ok=false;}daily.push({day:i+1,fn:v});total+=v;});
+  if(!ok)return;
+  if(!total)return showErr('No seeds germinated. Please enter counts for at least one day.');
+  if(total>N)return showErr(`Total germinated (${total}) exceeds total seeds (${N}).`);
+
+  const GP=(total/N)*100;
+  let GI=0;daily.forEach(d=>{if(d.fn>0)GI+=d.fn/d.day;});
+  let sFnDn=0;daily.forEach(d=>{sFnDn+=d.fn*d.day;});
+  const MGT=sFnDn/total;
+  let GRI=0,cumGerm=0;daily.forEach(d=>{cumGerm+=d.fn;if(cumGerm>0){const Gi=(cumGerm/N)*100;GRI+=Gi/d.day;}});
+  const SVI1=hasLen?GP*(RL+PL):null;
+  const SVI2=hasDW?GP*DW:null;
+  const T50=calcT50(daily,total);
+
+  setVal('v-gp',GP);setVal('v-gi',GI);setVal('v-mgt',MGT);setVal('v-gri',GRI);
+  setVal('v-svi1',SVI1);setVal('v-svi2',SVI2);
+  if(T50!==null){setVal('v-t50',T50);document.getElementById('u-t50').textContent='days';}
+  else{document.getElementById('v-t50').textContent='N/A';document.getElementById('v-t50').className='res-value na';document.getElementById('u-t50').textContent='';}
+
+  setTimeout(()=>{document.getElementById('gp-bar').style.width=Math.min(GP,100)+'%';},200);
+  const interp=GP>=80?'Excellent':GP>=60?'Good':GP>=40?'Moderate':'Poor';
+  document.getElementById('gp-lbl').textContent=`${interp} germination (${fmt(GP)}% of seeds)`;
+  document.getElementById('sumTitle').innerHTML=`Analysis Complete <span class="seed-badge">🌾 ${sn}</span>`;
+  document.getElementById('sumSub').textContent=`${total} of ${N} seeds germinated over ${rows.length} day${rows.length>1?'s':''} · ${interp} germination${hasLen?' · Seedling length: '+fmt(RL+PL,2)+' cm':''}${hasDW?' · Dry weight: '+fmt(DW,3)+' mg':''}`;
+
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+', '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  saveHistory({seedName:sn,date:dateStr,total:N,germinated:total,GP:fmt(GP),GI:fmt(GI),MGT:fmt(MGT),GRI:fmt(GRI),SVI1:SVI1!==null?fmt(SVI1):'N/A',SVI2:SVI2!==null?fmt(SVI2):'N/A',T50:T50!==null?fmt(T50)+' d':'N/A'});
+
+  const res=document.getElementById('results');
+  res.classList.remove('show');void res.offsetWidth;res.classList.add('show');
+  res.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+buildThemeGrid();
+addDay();addDay();addDay();
+</script>
+</body>
+</html>
